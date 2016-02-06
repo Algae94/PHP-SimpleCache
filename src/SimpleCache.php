@@ -1,6 +1,6 @@
 <?php
 
-namespace Gilbitron\Util;
+//namespace Gilbitron\Util;
 
 /*
  * SimpleCache v1.4.1
@@ -17,21 +17,11 @@ class SimpleCache {
 	public $cache_path = 'cache/';
 	// Length of time to cache a file (in seconds)
 	public $cache_time = 3600;
+        //percent cache variance randomization
+        public $cache_time_percent_variance = .15;
 	// Cache file extension
 	public $cache_extension = '.cache';
-
-	// This is just a functionality wrapper function
-	public function get_data($label, $url)
-	{
-		if($data = $this->get_cache($label)){
-			return $data;
-		} else {
-			$data = $this->do_curl($url);
-			$this->set_cache($label, $data);
-			return $data;
-		}
-	}
-
+	
 	public function set_cache($label, $data)
 	{
 		file_put_contents($this->cache_path . $this->safe_filename($label) . $this->cache_extension, $data);
@@ -51,7 +41,7 @@ class SimpleCache {
 	{
 		$filename = $this->cache_path . $this->safe_filename($label) . $this->cache_extension;
 
-		if(file_exists($filename) && (filemtime($filename) + $this->cache_time >= time())) return true;
+		if(file_exists($filename) && (filemtime($filename) + $this->get_random_cache_length() >= time())) return true;
 
 		return false;
 	}
@@ -77,4 +67,11 @@ class SimpleCache {
 	{
 		return preg_replace('/[^0-9a-z\.\_\-]/i','', strtolower($filename));
 	}
+        
+        //Helper function to return cache length randomization
+        private function get_random_cache_length()
+        {
+            $variance = round($this->cache_time*$this->cache_time_percent_variance);
+            return rand($this->cache_time - $variance, $this->cache_time + $variance);
+        }
 }
